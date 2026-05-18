@@ -5,3 +5,6 @@ def resolve_pages(root, info, **kwargs):
         return root.pages.all()
     else:
         return Page.objects.all()
+
+def resolve_page(root, info, id, **kwargs):
+    return Page.objects.get(pk=id)
