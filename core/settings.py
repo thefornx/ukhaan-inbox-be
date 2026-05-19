@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     # Local modules
     'account',
     'store',
+    'product',
 
     # External modules
     'graphene_django',
