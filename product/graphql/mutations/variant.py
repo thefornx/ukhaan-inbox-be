@@ -10,6 +10,7 @@ from store.models import Branch
 
 
 class ProductVariantInput(graphene.InputObjectType):
+    name = graphene.String(required=True)
     branch_id = graphene.Int()
     stock = graphene.Int(default_value=0)
     price = graphene.Decimal()
