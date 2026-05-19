@@ -19,6 +19,9 @@ class Page(models.Model):
     name = models.CharField(max_length=120)
     picture_url = models.TextField()
 
+    is_active = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
+
     users = models.ManyToManyField(
         User,
         through='UserPages',
