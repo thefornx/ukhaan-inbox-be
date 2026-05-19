@@ -66,12 +66,15 @@ class Assistant:
                 'type': 'function',
                 'function': {
                     'name': 'list_products',
-                    'description': 'Show product catalog cards. Call when user wants to browse, view, or shop products.',
+                    'description': 'Show product catalog cards. Call when user wants to browse, view, search, or shop products. Use name for keyword search and price_min/price_max for budget filtering (prices are in Mongolian Tugrik).',
                     'parameters': {
                         'type': 'object',
                         'properties': {
+                            'name': {'type': 'string', 'description': 'Optional keyword to search product name (partial, case-insensitive)'},
                             'category': {'type': 'string', 'description': 'Optional category name to filter'},
                             'brand': {'type': 'string', 'description': 'Optional brand name to filter'},
+                            'price_min': {'type': 'number', 'description': 'Optional minimum price in MNT'},
+                            'price_max': {'type': 'number', 'description': 'Optional maximum price in MNT'},
                         },
                     },
                 },
@@ -94,26 +97,41 @@ class Assistant:
             },
         ]
 
-    def _dispatch_tool(self, psid, name, args):
-        if name == 'list_products':
-            self._show_products(psid, category=args.get('category'), brand=args.get('brand'))
-        elif name == 'list_categories':
+    def _dispatch_tool(self, psid, tool_name, args):
+        if tool_name == 'list_products':
+            self._show_products(
+                psid,
+                name=args.get('name'),
+                category=args.get('category'),
+                brand=args.get('brand'),
+                price_min=args.get('price_min'),
+                price_max=args.get('price_max'),
+            )
+        elif tool_name == 'list_categories':
             self._show_categories(psid)
-        elif name == 'list_branches':
+        elif tool_name == 'list_branches':
             self._show_branches(psid)
 
-    def _show_products(self, psid, category=None, brand=None, category_id=None):
+    def _show_products(self, psid, name=None, category=None, brand=None, category_id=None, price_min=None, price_max=None):
         qs = (
             Product.objects.filter(page=self.page)
             .select_related('brand', 'category')
             .prefetch_related('variants__images')
         )
+        if name:
+            qs = qs.filter(name__icontains=name)
         if category_id:
             qs = qs.filter(category_id=category_id)
         if category:
             qs = qs.filter(category__name__icontains=category)
         if brand:
             qs = qs.filter(brand__name__icontains=brand)
+        if price_min is not None:
+            qs = qs.filter(variants__price__gte=price_min)
+        if price_max is not None:
+            qs = qs.filter(variants__price__lte=price_max)
+        if price_min is not None or price_max is not None:
+            qs = qs.distinct()
 
         products = list(qs[:10])
         if not products:

@@ -32,7 +32,14 @@ class Query(graphene.ObjectType):
     categories = graphene.List(CategoryType)
     category = graphene.Field(CategoryType, id=graphene.Int(required=True))
 
-    products = graphene.List(ProductType)
+    products = graphene.List(
+        ProductType,
+        name=graphene.String(),
+        category_id=graphene.Int(),
+        brand_id=graphene.Int(),
+        price_min=graphene.Decimal(),
+        price_max=graphene.Decimal(),
+    )
     product = graphene.Field(ProductType, id=graphene.Int(required=True))
 
     product_variants = graphene.List(ProductVariantType, product_id=graphene.Int())
@@ -53,8 +60,15 @@ class Query(graphene.ObjectType):
     @staticmethod
     @login_required
     @business_required
-    def resolve_products(_root, info):
-        return resolve_products(info.context.business)
+    def resolve_products(_root, info, name=None, category_id=None, brand_id=None, price_min=None, price_max=None):
+        return resolve_products(
+            info.context.business,
+            name=name,
+            category_id=category_id,
+            brand_id=brand_id,
+            price_min=price_min,
+            price_max=price_max,
+        )
 
     @staticmethod
     @login_required
