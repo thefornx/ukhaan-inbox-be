@@ -62,6 +62,30 @@ class MessengerWebhook:
             event_at=event_at,
         )
 
+        self._dispatch_assistant(page_id, psid, event_type, text, messaging)
+
+    def _dispatch_assistant(self, page_id, psid, event_type, text, messaging):
+        from account.models import Page
+        from core.services.assistant import Assistant
+
+        if event_type == 'message' and text:
+            page = Page.objects.filter(facebook_id=page_id).first()
+            if page:
+                try:
+                    Assistant(page).respond(psid, text)
+                except Exception as exc:
+                    print(f'[assistant] respond failed: {exc}')
+        elif event_type == 'postback':
+            payload = (messaging.get('postback') or {}).get('payload', '')
+            if not payload:
+                return
+            page = Page.objects.filter(facebook_id=page_id).first()
+            if page:
+                try:
+                    Assistant(page).handle_postback(psid, payload)
+                except Exception as exc:
+                    print(f'[assistant] postback failed: {exc}')
+
     def _classify(self, messaging):
         if 'message' in messaging:
             msg = messaging['message'] or {}
