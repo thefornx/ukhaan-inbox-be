@@ -3,7 +3,7 @@ import graphene
 from account.graphql.mutations.authenticate import AuthenticateMutation
 from account.graphql.types import UserType, PageType
 from core.graphql.decorators.login_required import login_required
-from .resolvers import resolve_page
+from core.graphql.decorators.business_required import business_required
 
 class Query(graphene.ObjectType):
     me = graphene.Field(UserType)
@@ -16,8 +16,9 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     @login_required
-    def resolve_page(root, id, info):
-        return resolve_page(root, info, id)
+    @business_required
+    def resolve_page(_root, info):
+        return info.context.business
 
 class Mutation(graphene.ObjectType):
     authenticate = AuthenticateMutation.Field()

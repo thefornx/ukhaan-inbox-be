@@ -6,8 +6,8 @@ from account.models import User
 from core.services.authentication import Authentication
 
 
-def login_required(resolver):
-    @wraps(resolver)
+def login_required(func):
+    @wraps(func)
     def wrapper(root, info, *args, **kwargs):
         request = info.context
 
@@ -26,6 +26,6 @@ def login_required(resolver):
         except User.DoesNotExist:
             raise GraphQLError('User not found')
 
-        return resolver(root, info, *args, **kwargs)
+        return func(root, info, *args, **kwargs)
 
     return wrapper
