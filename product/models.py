@@ -41,6 +41,7 @@ class Product(models.Model):
 
 class ProductVariant(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
+    name = models.CharField(max_length=120)
     branch = models.ForeignKey(
         Branch, null=True, blank=True,
         on_delete=models.SET_NULL, related_name='variants',
