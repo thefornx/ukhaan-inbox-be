@@ -151,3 +151,7 @@ FACEBOOK = {
     'APP_ID': os.getenv('FACEBOOK_APP_ID'),
     'APP_SECRET': os.getenv('FACEBOOK_APP_SECRET'),
 }
+
+MESSENGER = {
+    'VERIFY_TOKEN': os.getenv('MESSENGER_VERIFY_TOKEN'),
+}
