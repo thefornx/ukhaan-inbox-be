@@ -21,6 +21,11 @@ def get_open_cart(page, psid):
     )
 
 
+def clear_cart(page, psid):
+    deleted, _ = Order.objects.filter(page=page, psid=psid, status='cart').delete()
+    return deleted > 0
+
+
 @transaction.atomic
 def add_to_cart(page, psid, product, quantity=1):
     cart = get_or_create_cart(page, psid)

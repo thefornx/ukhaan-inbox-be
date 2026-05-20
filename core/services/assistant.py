@@ -7,7 +7,7 @@ from core.helpers.tools import TOOLS
 from core.services.messenger import Messenger
 from messenger.cards import branch_card, category_button, order_receipt, product_card
 from messenger.models import MessengerEvent
-from order.services import add_to_cart, get_open_cart
+from order.services import add_to_cart, clear_cart, get_open_cart
 from product.models import Category, Product
 from store.models import Branch
 
@@ -16,11 +16,20 @@ SYSTEM_PROMPT = (
     "Та '{page}' дэлгүүрийн найрсаг туслах. "
     "Хэрэглэгчтэй Монгол хэлээр товч, эелдгээр ярь. "
     "Бараа үзэх хүсвэл list_products, ангилал асуувал list_categories, "
-    "салбар эсвэл байршил асуувал list_branches tool-г дууд."
+    "салбар эсвэл байршил асуувал list_branches, сагсаа харах хүсвэл "
+    "get_order, цэвэрлэх хүсвэл clear_cart tool-г дууд."
 )
 HISTORY_LIMIT = 10
 CARD_LIMIT = 10
 CATEGORY_LIMIT = 3
+
+ORDER_QUICK_REPLIES = [
+    {'content_type': 'text', 'title': 'Захиалга өгөх', 'payload': 'CHECKOUT'},
+    {'content_type': 'text', 'title': 'Цэвэрлэх', 'payload': 'CLEAR_CART'},
+]
+ADD_QUICK_REPLIES = [
+    {'content_type': 'text', 'title': 'Сагсаа харах', 'payload': 'GET_ORDER'},
+]
 
 
 class Assistant:
@@ -58,6 +67,8 @@ class Assistant:
             self._list_branches(psid)
         elif payload == 'GET_ORDER':
             self._show_order(psid)
+        elif payload == 'CLEAR_CART':
+            self._clear_cart(psid)
         else:
             self.respond(psid, payload)
 
@@ -91,6 +102,8 @@ class Assistant:
             self._list_branches(psid)
         elif name == 'get_order':
             self._show_order(psid)
+        elif name == 'clear_cart':
+            self._clear_cart(psid)
 
     def _list_products(self, psid, name=None, category=None, brand=None,
                        category_id=None, price_min=None, price_max=None):
@@ -162,6 +175,7 @@ class Assistant:
         self._send_text(
             psid,
             f'"{product.name}" сагсанд нэмэгдлээ. Нийт {int(cart.total):,}₮',
+            quick_replies=ADD_QUICK_REPLIES,
         )
 
     def _show_order(self, psid):
@@ -171,15 +185,26 @@ class Assistant:
 
         self.messenger.send_template(
             self.page.access_token, psid, order_receipt(order),
+            quick_replies=ORDER_QUICK_REPLIES,
         )
         self._log_echo(psid, f'[захиалга {order.id}]')
+
+    def _clear_cart(self, psid):
+        cleared = clear_cart(self.page, psid)
+        self._send_text(
+            psid,
+            'Сагс цэвэрлэгдлээ.' if cleared else 'Сагс одоо ч хоосон байна.',
+        )
 
     def _send_cards(self, psid, cards, echo):
         self.messenger.send_generic_template(self.page.access_token, psid, cards)
         self._log_echo(psid, echo)
 
-    def _send_text(self, psid, text):
-        self.messenger.send_message(self.page.access_token, psid, text)
+    def _send_text(self, psid, text, quick_replies=None):
+        self.messenger.send_message(
+            self.page.access_token, psid, text,
+            quick_replies=quick_replies,
+        )
         self._log_echo(psid, text)
 
     def _log_echo(self, psid, text):

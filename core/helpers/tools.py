@@ -47,4 +47,12 @@ TOOLS = [
             'parameters': {'type': 'object', 'properties': {}},
         },
     },
+    {
+        'type': 'function',
+        'function': {
+            'name': 'clear_cart',
+            'description': 'Empty the user current cart. Call only when the user explicitly asks to clear, empty, reset, or cancel their cart.',
+            'parameters': {'type': 'object', 'properties': {}},
+        },
+    },
 ]
