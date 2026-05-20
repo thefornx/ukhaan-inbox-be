@@ -15,11 +15,18 @@ def product_card(product):
 
     card = {
         'title': product.name[:80],
-        'buttons': [{
-            'type': 'postback',
-            'title': 'Дэлгэрэнгүй',
-            'payload': f'PRODUCT_{product.id}',
-        }],
+        'buttons': [
+            {
+                'type': 'postback',
+                'title': 'Дэлгэрэнгүй',
+                'payload': f'PRODUCT_{product.id}',
+            },
+            {
+                'type': 'postback',
+                'title': 'Сагслах',
+                'payload': f'ADD_TO_CART_{product.brand.id}',
+            }
+        ],
     }
     if subtitle:
         card['subtitle'] = subtitle[:80]
