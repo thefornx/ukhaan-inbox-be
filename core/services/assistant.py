@@ -5,8 +5,9 @@ from openai import OpenAI
 
 from core.helpers.tools import TOOLS
 from core.services.messenger import Messenger
-from messenger.cards import branch_card, category_button, product_card
+from messenger.cards import branch_card, category_button, order_receipt, product_card
 from messenger.models import MessengerEvent
+from order.services import add_to_cart, get_open_cart
 from product.models import Category, Product
 from store.models import Branch
 
@@ -49,10 +50,14 @@ class Assistant:
             self._show_product(psid, payload.removeprefix('PRODUCT_'))
         elif payload.startswith('CATEGORY_'):
             self._list_products(psid, category_id=payload.removeprefix('CATEGORY_'))
+        elif payload.startswith('ADD_TO_CART_'):
+            self._add_to_cart(psid, payload.removeprefix('ADD_TO_CART_'))
         elif payload == 'CATEGORIES':
             self._list_categories(psid)
         elif payload == 'BRANCHES':
             self._list_branches(psid)
+        elif payload == 'GET_ORDER':
+            self._show_order(psid)
         else:
             self.respond(psid, payload)
 
@@ -84,6 +89,8 @@ class Assistant:
             self._list_categories(psid)
         elif name == 'list_branches':
             self._list_branches(psid)
+        elif name == 'get_order':
+            self._show_order(psid)
 
     def _list_products(self, psid, name=None, category=None, brand=None,
                        category_id=None, price_min=None, price_max=None):
@@ -145,6 +152,27 @@ class Assistant:
             return self._send_text(psid, 'Салбар бүртгэгдээгүй байна.')
 
         self._send_cards(psid, [branch_card(b) for b in branches], '[салбар]')
+
+    def _add_to_cart(self, psid, product_id):
+        product = Product.objects.filter(pk=product_id, page=self.page).first()
+        if not product:
+            return self._send_text(psid, 'Уучлаарай, бараа олдсонгүй.')
+
+        cart = add_to_cart(self.page, psid, product)
+        self._send_text(
+            psid,
+            f'"{product.name}" сагсанд нэмэгдлээ. Нийт {int(cart.total):,}₮',
+        )
+
+    def _show_order(self, psid):
+        order = get_open_cart(self.page, psid)
+        if not order or not order.items.exists():
+            return self._send_text(psid, 'Сагс хоосон байна.')
+
+        self.messenger.send_template(
+            self.page.access_token, psid, order_receipt(order),
+        )
+        self._log_echo(psid, f'[захиалга {order.id}]')
 
     def _send_cards(self, psid, cards, echo):
         self.messenger.send_generic_template(self.page.access_token, psid, cards)

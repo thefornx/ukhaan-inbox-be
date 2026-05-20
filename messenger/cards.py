@@ -24,7 +24,7 @@ def product_card(product):
             {
                 'type': 'postback',
                 'title': 'Сагслах',
-                'payload': f'ADD_TO_CART_{product.brand.id}',
+                'payload': f'ADD_TO_CART_{product.id}',
             }
         ],
     }
@@ -76,4 +76,34 @@ def category_button(category):
         'type': 'postback',
         'title': category.name[:20],
         'payload': f'CATEGORY_{category.id}',
+    }
+
+
+def order_receipt(order, recipient_name='Хэрэглэгч', payment_method='Бэлэн'):
+    elements = []
+    for item in order.items.all():
+        element = {
+            'title': item.product.name[:80],
+            'quantity': item.quantity,
+            'price': float(item.unit_price),
+            'currency': 'MNT',
+        }
+        image_obj = item.variant.images.first() if item.variant else None
+        if image_obj:
+            element['image_url'] = image_obj.url
+        elements.append(element)
+
+    total = float(order.total)
+    return {
+        'template_type': 'receipt',
+        'recipient_name': recipient_name,
+        'order_number': str(order.id),
+        'currency': 'MNT',
+        'payment_method': payment_method,
+        'timestamp': str(int(order.created_at.timestamp())),
+        'summary': {
+            'subtotal': total,
+            'total_cost': total,
+        },
+        'elements': elements,
     }

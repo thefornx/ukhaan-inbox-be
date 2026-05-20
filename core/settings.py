@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'account',
     'store',
     'product',
+    'order',
     'messenger',
 
     # External modules

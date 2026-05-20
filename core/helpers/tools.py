@@ -36,4 +36,15 @@ TOOLS = [
             'parameters': {'type': 'object', 'properties': {}},
         },
     },
+    {
+        'type': 'function',
+        'function': {
+            'name': 'get_order',
+            'description': (
+                'Show the user their current cart/order as a receipt. '
+                'Call when user asks about their cart, order, what they have added, or wants a summary of their selections.'
+            ),
+            'parameters': {'type': 'object', 'properties': {}},
+        },
+    },
 ]
